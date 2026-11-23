@@ -1,0 +1,117 @@
+
+import java.awt.*;
+import java.sql.*;
+import javax.swing.*;
+
+class FeeService {
+    private static final String URL = "jdbc:mysql://localhost:3306/college";
+    private static final String USER = "root";
+    private static final String PWD = "your_password";
+
+    String pay(String regNo, String amountText) throws Exception {
+        if (regNo == null || regNo.trim().isEmpty())
+            throw new IllegalArgumentException("Enter registration number.");
+
+        double amount;
+        try {
+            amount = Double.parseDouble(amountText.trim());
+        } catch (NumberFormatException ex) {
+            throw new IllegalArgumentException("Enter a valid amount.");
+        }
+
+        if (amount <= 0)
+            throw new IllegalArgumentException("Amount must be positive.");
+
+        String sql = "INSERT INTO fees(reg_no, amount) VALUES(?, ?)";
+
+        try (Connection c = DriverManager.getConnection(URL, USER, PWD);
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, regNo.trim());
+            ps.setDouble(2, amount);
+            ps.executeUpdate();
+        }
+
+        return "Payment recorded successfully.";
+    }
+}
+
+public class FeeWindow extends JFrame {
+    private final JTextField regNo = new JTextField(14);
+    private final JTextField amount = new JTextField(10);
+    private final FeeService service = new FeeService();
+
+    public FeeWindow() {
+        super("Student Fee Payment");
+
+        setLayout(new GridLayout(4, 2, 8, 8));
+
+        add(new JLabel("Registration No:"));
+        add(regNo);
+
+        add(new JLabel("Amount:"));
+        add(amount);
+
+        JButton pay = new JButton("Pay");
+        JButton clear = new JButton("Clear");
+        JButton receipt = new JButton("Receipt");
+
+        add(pay);
+        add(clear);
+        add(receipt);
+        add(new JLabel(""));
+
+        pay.addActionListener(e -> payFee());
+
+        clear.addActionListener(e -> {
+            regNo.setText("");
+            amount.setText("");
+        });
+
+        receipt.addActionListener(e ->
+            JOptionPane.showMessageDialog(this,
+                "Receipt is available after a successful payment."));
+
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setSize(380, 190);
+        setLocationRelativeTo(null);
+    }
+
+    private void payFee() {
+        String id = regNo.getText();
+        String value = amount.getText();
+
+        setButtonsEnabled(false);
+
+        new SwingWorker<String, Void>() {
+            protected String doInBackground() throws Exception {
+                return service.pay(id, value);
+            }
+
+            protected void done() {
+                setButtonsEnabled(true);
+
+                try {
+                    JOptionPane.showMessageDialog(FeeWindow.this, get());
+                } catch (Exception ex) {
+                    Throwable cause = ex.getCause();
+
+                    JOptionPane.showMessageDialog(FeeWindow.this,
+                        cause == null ? ex.getMessage() : cause.getMessage(),
+                        "Payment Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
+    }
+
+    private void setButtonsEnabled(boolean enabled) {
+        for (Component c : getContentPane().getComponents())
+            if (c instanceof JButton)
+                c.setEnabled(enabled);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() ->
+            new FeeWindow().setVisible(true));
+    }
+}

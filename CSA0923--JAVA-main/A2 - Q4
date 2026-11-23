@@ -1,0 +1,79 @@
+import java.util.*;
+
+public class Q4Maps {
+
+    static volatile int sink;
+
+    static long lookup(Map<String, Integer> map, String[] keys, int count) {
+        long start = System.nanoTime();
+        int total = 0;
+
+        for (int i = 0; i < count; i++) {
+            total += map.get(keys[(i * 31) % keys.length]);
+        }
+
+        sink = total;
+        return System.nanoTime() - start;
+    }
+
+    static long report(Map<String, Integer> map, boolean sorted) {
+        long start = System.nanoTime();
+
+        if (sorted) {
+            for (var entry : new TreeMap<>(map).entrySet()) {
+                sink += entry.getValue();
+            }
+        } else {
+            for (var entry : map.entrySet()) {
+                sink += entry.getValue();
+            }
+        }
+
+        return System.nanoTime() - start;
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Java=" + System.getProperty("java.version")
+                + "; 100,000 lookups; milliseconds");
+
+        for (int n : new int[]{1000, 10000, 50000}) {
+
+            Map<String, Integer> hashMap = new HashMap<>();
+            Map<String, Integer> treeMap = new TreeMap<>();
+            Map<String, Integer> linkedHashMap = new LinkedHashMap<>();
+
+            String[] keys = new String[n];
+
+            for (int i = 0; i < n; i++) {
+                String key = String.format(Locale.ROOT, "M%08d", i);
+                keys[i] = key;
+
+                hashMap.put(key, i);
+                treeMap.put(key, i);
+                linkedHashMap.put(key, i);
+            }
+
+            System.out.println("\nMedicines=" + n);
+
+            System.out.printf(Locale.US,
+                    "HashMap lookup %.3f ms | TreeMap %.3f ms | LinkedHashMap %.3f ms%n",
+                    lookup(hashMap, keys, 100000) / 1e6,
+                    lookup(treeMap, keys, 100000) / 1e6,
+                    lookup(linkedHashMap, keys, 100000) / 1e6);
+
+            System.out.printf(Locale.US,
+                    "Code-order report HashMap+sort %.3f ms | TreeMap direct %.3f ms%n",
+                    report(hashMap, true) / 1e6,
+                    report(treeMap, false) / 1e6);
+
+            System.out.printf(Locale.US,
+                    "Insertion-order report LinkedHashMap direct %.3f ms%n",
+                    report(linkedHashMap, false) / 1e6);
+
+            System.out.println("First key in code order="
+                    + treeMap.keySet().iterator().next()
+                    + "; first inserted key="
+                    + linkedHashMap.keySet().iterator().next());
+        }
+    }
+}

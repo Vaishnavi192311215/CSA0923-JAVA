@@ -1,0 +1,80 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+
+public class CampusLibrarySearch extends JFrame {
+    private final JTextField searchField = new JTextField(20);
+    private final JComboBox<String> category = new JComboBox<>(new String[]{"All", "Book", "Journal", "Thesis"});
+    private final DefaultListModel<String> resultModel = new DefaultListModel<>();
+    private final JList<String> resultList = new JList<>(resultModel);
+    private final java.util.List<String> catalogue = Arrays.asList(
+        "Book: Java Programming",
+        "Book: Data Structures",
+        "Journal: Software Engineering Review",
+        "Thesis: Smart Campus Library"
+    );
+
+    public CampusLibrarySearch() {
+        setTitle("Campus Library Search");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(550, 420);
+        setLocationRelativeTo(null);
+
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 12));
+        top.add(new JLabel("Keyword:"));
+        top.add(searchField);
+        top.add(new JLabel("Category:"));
+        top.add(category);
+        JButton search = new JButton("Search");
+        top.add(search);
+
+        resultList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scroll = new JScrollPane(resultList);
+        scroll.setBorder(BorderFactory.createTitledBorder("Search Results"));
+
+        JButton reserve = new JButton("Reserve Selected Book");
+        JButton clear = new JButton("Clear");
+        JPanel bottom = new JPanel();
+        bottom.add(reserve); bottom.add(clear);
+
+        search.addActionListener(e -> performSearch());
+        searchField.addActionListener(e -> performSearch());
+        reserve.addActionListener(e -> {
+            String selected = resultList.getSelectedValue();
+            if (selected == null) {
+                JOptionPane.showMessageDialog(this, "Select an item first.");
+            } else if (!selected.startsWith("Book:")) {
+                JOptionPane.showMessageDialog(this, "Only books can be reserved.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Reservation requested for:\n" + selected);
+            }
+        });
+        clear.addActionListener(e -> {
+            searchField.setText("");
+            category.setSelectedIndex(0);
+            resultModel.clear();
+        });
+
+        add(new JLabel("CAMPUS LIBRARY SEARCH", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(top, BorderLayout.PAGE_START);
+        add(scroll, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    private void performSearch() {
+        String query = searchField.getText().trim().toLowerCase();
+        String type = (String) category.getSelectedItem();
+        resultModel.clear();
+        for (String item : catalogue) {
+            boolean categoryMatch = "All".equals(type) || item.startsWith(type + ":");
+            if (categoryMatch && item.toLowerCase().contains(query)) resultModel.addElement(item);
+        }
+        if (resultModel.isEmpty()) {
+            resultModel.addElement("No matching records found.");
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CampusLibrarySearch().setVisible(true));
+    }
+}

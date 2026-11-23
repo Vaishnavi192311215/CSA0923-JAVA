@@ -1,0 +1,114 @@
+
+import java.time.*;
+import java.util.*;
+
+interface PricingRule {
+    double fee(int minutes, int entryHour);
+}
+
+class EBike implements PricingRule {
+    public double fee(int minutes, int entryHour) {
+        return minutes == 0 ? 0 : 20;
+    }
+}
+
+class DeliveryVan implements PricingRule {
+    public double fee(int minutes, int entryHour) {
+        int hours = (minutes + 59) / 60;
+        int rate = (entryHour >= 9 && entryHour < 17)
+                   ? 60 : 30;
+        return hours * rate;
+    }
+}
+
+class OneDayPass {
+    LocalDate validDate;
+
+    OneDayPass(LocalDate date) {
+        validDate = date;
+    }
+
+    boolean isValid(LocalDate date) {
+        return validDate.equals(date);
+    }
+}
+
+class ParkingFacility {
+    String[][] slots = {
+        new String[2],
+        new String[3],
+        new String[4],
+        new String[2],
+        new String[5]
+    };
+
+    Set<String> parked = new HashSet<>();
+
+    void park(String regNo) {
+        if (parked.contains(regNo)) {
+            System.out.println("Duplicate vehicle");
+            return;
+        }
+
+        for (int i = 0; i < slots.length; i++) {
+            for (int j = 0; j < slots[i].length; j++) {
+                if (slots[i][j] == null) {
+                    slots[i][j] = regNo;
+                    parked.add(regNo);
+                    System.out.println(regNo + " -> Floor "
+                        + (i + 1) + ", Slot " + (j + 1));
+                    return;
+                }
+            }
+        }
+        System.out.println("Parking Full");
+    }
+
+    void showCapacity() {
+        for (int i = 0; i < slots.length; i++)
+            System.out.println("Floor " + (i + 1)
+                + ": " + slots[i].length + " slots");
+    }
+}
+
+public class Task12_DesignChallenge {
+    public static void main(String[] args) {
+
+        ParkingFacility parking = new ParkingFacility();
+
+        System.out.println("=== FIVE FLOORS ===");
+        parking.showCapacity();
+
+        System.out.println("\n=== NEW VEHICLE FEES ===");
+
+        PricingRule bike = new EBike();
+        PricingRule van = new DeliveryVan();
+
+        System.out.println("E-Bike Fee: Rs "
+            + bike.fee(120, 10));
+
+        System.out.println("Van Peak Fee: Rs "
+            + van.fee(120, 10));
+
+        System.out.println("Van Off-Peak Fee: Rs "
+            + van.fee(120, 18));
+
+        System.out.println("\n=== VISITOR PASS ===");
+
+        LocalDate date = LocalDate.of(2026, 10, 26);
+        OneDayPass pass = new OneDayPass(date);
+
+        System.out.println("Pass Valid: "
+            + pass.isValid(date));
+
+        double visitorFee = pass.isValid(date) ? 0 : 90;
+        System.out.println("Visitor Fee: Rs " + visitorFee);
+
+        System.out.println("\n=== SLOT ALLOCATION ===");
+
+        parking.park("TN01EB");
+        parking.park("TN02DV");
+        parking.park("TN03VC");
+        parking.park("TN01EB");
+    }
+}

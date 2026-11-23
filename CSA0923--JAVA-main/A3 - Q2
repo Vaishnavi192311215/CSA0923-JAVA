@@ -1,0 +1,93 @@
+
+class ExamException extends Exception {
+    ExamException(String message) {
+        super(message);
+    }
+
+    ExamException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+class ExamWindowClosedException extends ExamException {
+    ExamWindowClosedException(String m) {
+        super(m);
+    }
+}
+
+class NotRegisteredException extends ExamException {
+    NotRegisteredException(String m) {
+        super(m);
+    }
+}
+
+class SubmissionStorageException extends ExamException {
+    SubmissionStorageException(String m, Throwable c) {
+        super(m, c);
+    }
+}
+
+class Storage {
+    void save(String fileName, long sizeKb)
+            throws SubmissionStorageException {
+        try {
+            if (sizeKb > 500)
+                throw new java.io.IOException("Disk quota exceeded");
+
+            System.out.println("Saved " + fileName);
+        } catch (java.io.IOException e) {
+            throw new SubmissionStorageException(
+                "Could not store " + fileName, e);
+        }
+    }
+}
+
+class ExamService {
+    private final Storage storage = new Storage();
+
+    void submit(String file, long size, boolean registered,
+                boolean windowOpen) throws ExamException {
+
+        if (!windowOpen)
+            throw new ExamWindowClosedException("Exam window has closed");
+
+        if (!registered)
+            throw new NotRegisteredException(
+                "Student is not registered for this course");
+
+        storage.save(file, size);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        ExamService service = new ExamService();
+
+        Object[][] cases = {
+            {"answer01.pdf", 120L, true, true},
+            {"answer02.pdf", 800L, true, true},
+            {"answer03.pdf", 100L, false, true},
+            {"answer04.pdf", 100L, true, false}
+        };
+
+        for (Object[] c : cases) {
+            try {
+                service.submit(
+                    (String)c[0],
+                    (long)c[1],
+                    (boolean)c[2],
+                    (boolean)c[3]
+                );
+            } catch (ExamException e) {
+                System.out.println("Error: " + e.getMessage());
+
+                if (e.getCause() != null) {
+                    System.out.println("Cause: " +
+                        e.getCause().getMessage());
+                    System.out.println("Chained trace:");
+                    e.printStackTrace(System.out);
+                }
+            }
+        }
+    }
+}

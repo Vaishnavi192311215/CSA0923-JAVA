@@ -1,0 +1,135 @@
+import java.util.*;
+
+public class Q2Lists {
+
+    static volatile long sink;
+
+    static long time(Runnable r) {
+        long start = System.nanoTime();
+        r.run();
+        return System.nanoTime() - start;
+    }
+
+    static void report(String operation, int n, long arrayListTime, long linkedListTime) {
+        System.out.printf(Locale.US,
+                "%-22s n=%-7d ArrayList=%8.3f ms LinkedList=%8.3f ms%n",
+                operation, n, arrayListTime / 1e6, linkedListTime / 1e6);
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Java=" + System.getProperty("java.version")
+                + "; one timed pass per operation; values are workload observations");
+
+        for (int n : new int[]{1000, 5000, 10000}) {
+
+            long arrayListTime = time(() -> {
+                List<Integer> list = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    list.add(i);
+                }
+                sink = list.size();
+            });
+
+            long linkedListTime = time(() -> {
+                List<Integer> list = new LinkedList<>();
+                for (int i = 0; i < n; i++) {
+                    list.add(i);
+                }
+                sink = list.size();
+            });
+
+            report("Append", n, arrayListTime, linkedListTime);
+
+            arrayListTime = time(() -> {
+                List<Integer> list = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    list.add(i);
+                }
+                for (int i = 0; i < Math.min(n, 2000); i++) {
+                    list.add(0, -i);
+                }
+                sink = list.size();
+            });
+
+            linkedListTime = time(() -> {
+                List<Integer> list = new LinkedList<>();
+                for (int i = 0; i < n; i++) {
+                    list.add(i);
+                }
+                for (int i = 0; i < Math.min(n, 2000); i++) {
+                    list.add(0, -i);
+                }
+                sink = list.size();
+            });
+
+            report("Front insert (max 2000)", n, arrayListTime, linkedListTime);
+
+            List<Integer> arrayList = new ArrayList<>();
+            List<Integer> linkedList = new LinkedList<>();
+
+            for (int i = 0; i < n; i++) {
+                arrayList.add(i);
+                linkedList.add(i);
+            }
+
+            int repetitions = Math.min(20000, n * 2);
+
+            arrayListTime = time(() -> {
+                long total = 0;
+                for (int i = 0; i < repetitions; i++) {
+                    total += arrayList.get((i * 7919) % n);
+                }
+                sink = total;
+            });
+
+            linkedListTime = time(() -> {
+                long total = 0;
+                for (int i = 0; i < repetitions; i++) {
+                    total += linkedList.get((i * 7919) % n);
+                }
+                sink = total;
+            });
+
+            report("Random get (" + repetitions + " ops)", n, arrayListTime, linkedListTime);
+
+            arrayListTime = time(() -> {
+                long total = 0;
+                for (int value : arrayList) {
+                    total += value;
+                }
+                sink = total;
+            });
+
+            linkedListTime = time(() -> {
+                long total = 0;
+                for (int value : linkedList) {
+                    total += value;
+                }
+                sink = total;
+            });
+
+            report("Full iteration", n, arrayListTime, linkedListTime);
+        }
+
+        for (int n : new int[]{1000, 5000, 10000}) {
+            long time = time(() -> {
+                ArrayDeque<Integer> deque = new ArrayDeque<>();
+
+                for (int i = 0; i < n; i++) {
+                    deque.addLast(i);
+                }
+
+                for (int i = 0; i < n; i++) {
+                    deque.addFirst(-i);
+                    deque.removeFirst();
+                }
+
+                sink = deque.size();
+            });
+
+            System.out.printf(Locale.US,
+                    "ArrayDeque double-ended workload n=%d: %.3f ms%n",
+                    n, time / 1e6);
+        }
+    }
+}

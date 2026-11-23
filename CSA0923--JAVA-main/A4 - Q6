@@ -1,0 +1,124 @@
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+public class CampusEventRegistration extends JFrame {
+    private final JTextField studentId = new JTextField(12);
+    private final JTextField studentName = new JTextField(12);
+    private final JComboBox<String> eventChoice = new JComboBox<>(new String[]{
+        "Cultural Fest", "Technical Symposium", "Sports Meet"
+    });
+    private final JComboBox<String> filterChoice = new JComboBox<>(new String[]{
+        "All Events", "Cultural Fest", "Technical Symposium", "Sports Meet"
+    });
+    private final DefaultTableModel model = new DefaultTableModel(
+        new String[]{"Registration ID", "Student ID", "Student Name", "Event", "Registered At"}, 0) {
+        @Override public boolean isCellEditable(int row, int column) { return false; }
+    };
+    private final JTable table = new JTable(model);
+    private final List<Object[]> registrations = new ArrayList<>();
+    private int nextId = 1;
+
+    public CampusEventRegistration() {
+        setTitle("Campus Event Registration System");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(850, 520);
+        setLocationRelativeTo(null);
+
+        JPanel entry = new JPanel(new GridLayout(2, 4, 8, 8));
+        entry.setBorder(BorderFactory.createTitledBorder("Student Registration"));
+        entry.add(new JLabel("Student ID:")); entry.add(studentId);
+        entry.add(new JLabel("Student Name:")); entry.add(studentName);
+        entry.add(new JLabel("Select Event:")); entry.add(eventChoice);
+        JButton register = new JButton("Register Student");
+        JButton clear = new JButton("Clear Fields");
+        entry.add(register); entry.add(clear);
+
+        JPanel filter = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filter.add(new JLabel("Filter registrations:"));
+        filter.add(filterChoice);
+        JButton export = new JButton("Export CSV");
+        filter.add(export);
+
+        JPanel top = new JPanel(new BorderLayout(5, 5));
+        top.add(entry, BorderLayout.CENTER);
+        top.add(filter, BorderLayout.SOUTH);
+
+        table.setFillsViewportHeight(true);
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(BorderFactory.createTitledBorder("Registration Details"));
+
+        register.addActionListener(e -> registerStudent());
+        clear.addActionListener(e -> {
+            studentId.setText("");
+            studentName.setText("");
+            eventChoice.setSelectedIndex(0);
+        });
+        filterChoice.addActionListener(e -> refreshTable());
+        export.addActionListener(e -> exportCsv());
+
+        add(new JLabel("CAMPUS EVENT REGISTRATION SYSTEM", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(top, BorderLayout.PAGE_START);
+        add(scroll, BorderLayout.CENTER);
+    }
+
+    private void registerStudent() {
+        String sid = studentId.getText().trim();
+        String name = studentName.getText().trim();
+        String event = (String) eventChoice.getSelectedItem();
+        if (sid.isEmpty() || name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Enter both Student ID and Student Name.", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        for (Object[] row : registrations) {
+            if (sid.equals(row[1]) && event.equals(row[3])) {
+                JOptionPane.showMessageDialog(this, "This student is already registered for this event.");
+                return;
+            }
+        }
+        String time = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        registrations.add(new Object[]{nextId++, sid, name, event, time});
+        refreshTable();
+        JOptionPane.showMessageDialog(this, "Registration successful!");
+        studentId.setText("");
+        studentName.setText("");
+    }
+
+    private void refreshTable() {
+        model.setRowCount(0);
+        String filter = (String) filterChoice.getSelectedItem();
+        for (Object[] row : registrations) {
+            if ("All Events".equals(filter) || filter.equals(row[3])) model.addRow(row);
+        }
+    }
+
+    private void exportCsv() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(new java.io.File("registrations.csv"));
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        try (FileWriter writer = new FileWriter(chooser.getSelectedFile())) {
+            writer.write("Registration ID,Student ID,Student Name,Event,Registered At\n");
+            for (Object[] row : registrations) {
+                for (int i = 0; i < row.length; i++) {
+                    String value = String.valueOf(row[i]).replace("\"", "\"\"");
+                    writer.write("\"" + value + "\"");
+                    if (i < row.length - 1) writer.write(",");
+                }
+                writer.write("\n");
+            }
+            JOptionPane.showMessageDialog(this, "CSV exported successfully.");
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Could not export CSV: " + ex.getMessage(), "Export Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CampusEventRegistration().setVisible(true));
+    }
+}

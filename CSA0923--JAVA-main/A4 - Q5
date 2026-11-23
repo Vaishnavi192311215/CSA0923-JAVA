@@ -1,0 +1,199 @@
+5[A] -
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class CurrencyConverterFrameListener extends JFrame implements ActionListener {
+    private final JTextField amountField = new JTextField(12);
+    private final JComboBox<String> currency = new JComboBox<>(new String[]{"USD", "EUR"});
+    private final JLabel result = new JLabel("Converted amount will appear here.");
+
+    public CurrencyConverterFrameListener() {
+        setTitle("Currency Converter - Frame Listener");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(430, 240);
+        setLocationRelativeTo(null);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 25, 15, 25));
+        form.add(new JLabel("Amount in INR:")); form.add(amountField);
+        form.add(new JLabel("Convert to:")); form.add(currency);
+
+        JButton convert = new JButton("Convert");
+        convert.addActionListener(this);
+        JPanel bottom = new JPanel(new GridLayout(2, 1));
+        bottom.add(convert); bottom.add(result);
+
+        add(new JLabel("CURRENCY CONVERTER", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(form, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    @Override public void actionPerformed(ActionEvent e) {
+        try {
+            double amount = Double.parseDouble(amountField.getText().trim());
+            if (amount < 0) throw new NumberFormatException();
+            String selected = (String) currency.getSelectedItem();
+            double converted = amount * ("USD".equals(selected) ? 0.012 : 0.011);
+            result.setText(String.format("%.2f %s", converted, selected));
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Enter a valid non-negative amount.", "Input Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CurrencyConverterFrameListener().setVisible(true));
+    }
+}
+
+5[B] -
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class CurrencyConverterNamedInnerClass extends JFrame {
+    private final JTextField amountField = new JTextField(12);
+    private final JComboBox<String> currency = new JComboBox<>(new String[]{"USD", "EUR"});
+    private final JLabel result = new JLabel("Converted amount will appear here.");
+
+    public CurrencyConverterNamedInnerClass() {
+        setTitle("Currency Converter - Named Inner Class");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(430, 240);
+        setLocationRelativeTo(null);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 25, 15, 25));
+        form.add(new JLabel("Amount in INR:")); form.add(amountField);
+        form.add(new JLabel("Convert to:")); form.add(currency);
+
+        JButton convert = new JButton("Convert");
+        convert.addActionListener(new ConvertHandler());
+        JPanel bottom = new JPanel(new GridLayout(2, 1));
+        bottom.add(convert); bottom.add(result);
+
+        add(new JLabel("CURRENCY CONVERTER", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(form, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    private class ConvertHandler implements ActionListener {
+        @Override public void actionPerformed(ActionEvent e) {
+            try {
+                double amount = Double.parseDouble(amountField.getText().trim());
+                if (amount < 0) throw new NumberFormatException();
+                String selected = (String) currency.getSelectedItem();
+                double converted = amount * ("USD".equals(selected) ? 0.012 : 0.011);
+                result.setText(String.format("%.2f %s", converted, selected));
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(CurrencyConverterNamedInnerClass.this,
+                    "Enter a valid non-negative amount.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CurrencyConverterNamedInnerClass().setVisible(true));
+    }
+}
+
+5[C] -
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class CurrencyConverterAnonymousInnerClass extends JFrame {
+    private final JTextField amountField = new JTextField(12);
+    private final JComboBox<String> currency = new JComboBox<>(new String[]{"USD", "EUR"});
+    private final JLabel result = new JLabel("Converted amount will appear here.");
+
+    public CurrencyConverterAnonymousInnerClass() {
+        setTitle("Currency Converter - Anonymous Inner Class");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(450, 240);
+        setLocationRelativeTo(null);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 25, 15, 25));
+        form.add(new JLabel("Amount in INR:")); form.add(amountField);
+        form.add(new JLabel("Convert to:")); form.add(currency);
+
+        JButton convert = new JButton("Convert");
+        convert.addActionListener(new ActionListener() {
+            @Override public void actionPerformed(ActionEvent e) {
+                try {
+                    double amount = Double.parseDouble(amountField.getText().trim());
+                    if (amount < 0) throw new NumberFormatException();
+                    String selected = (String) currency.getSelectedItem();
+                    double converted = amount * ("USD".equals(selected) ? 0.012 : 0.011);
+                    result.setText(String.format("%.2f %s", converted, selected));
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(CurrencyConverterAnonymousInnerClass.this,
+                        "Enter a valid non-negative amount.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
+        JPanel bottom = new JPanel(new GridLayout(2, 1));
+        bottom.add(convert); bottom.add(result);
+        add(new JLabel("CURRENCY CONVERTER", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(form, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CurrencyConverterAnonymousInnerClass().setVisible(true));
+    }
+}
+
+5[D] -
+import javax.swing.*;
+import java.awt.*;
+
+public class CurrencyConverterLambda extends JFrame {
+    private final JTextField amountField = new JTextField(12);
+    private final JComboBox<String> currency = new JComboBox<>(new String[]{"USD", "EUR"});
+    private final JLabel result = new JLabel("Converted amount will appear here.");
+
+    @FunctionalInterface
+    interface Converter {
+        double convert(double amount, String currency);
+    }
+
+    public CurrencyConverterLambda() {
+        setTitle("Currency Converter - Lambda Expression");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(430, 240);
+        setLocationRelativeTo(null);
+
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 12));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 25, 15, 25));
+        form.add(new JLabel("Amount in INR:")); form.add(amountField);
+        form.add(new JLabel("Convert to:")); form.add(currency);
+
+        Converter converter = (amount, type) ->
+            amount * ("USD".equals(type) ? 0.012 : 0.011);
+
+        JButton convert = new JButton("Convert");
+        convert.addActionListener(e -> {
+            try {
+                double amount = Double.parseDouble(amountField.getText().trim());
+                if (amount < 0) throw new NumberFormatException();
+                String selected = (String) currency.getSelectedItem();
+                result.setText(String.format("%.2f %s", converter.convert(amount, selected), selected));
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Enter a valid non-negative amount.", "Input Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JPanel bottom = new JPanel(new GridLayout(2, 1));
+        bottom.add(convert); bottom.add(result);
+        add(new JLabel("CURRENCY CONVERTER", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(form, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new CurrencyConverterLambda().setVisible(true));
+    }
+}

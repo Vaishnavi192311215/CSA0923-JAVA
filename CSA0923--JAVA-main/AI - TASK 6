@@ -1,0 +1,62 @@
+
+abstract class Vehicle {
+    String regNo;
+
+    Vehicle(String regNo) {
+        this.regNo = regNo;
+        System.out.println("Vehicle constructor called");
+    }
+
+    abstract double calculateFee(int hours);
+}
+
+class TwoWheeler extends Vehicle {
+    TwoWheeler(String regNo) {
+        super(regNo);
+        System.out.println("TwoWheeler constructor called");
+    }
+
+    @Override
+    double calculateFee(int hours) {
+        return hours * 10;
+    }
+}
+
+class Car extends Vehicle {
+    Car(String regNo) {
+        super(regNo);
+        System.out.println("Car constructor called");
+    }
+
+    @Override
+    double calculateFee(int hours) {
+        return hours * 30;
+    }
+}
+
+class ElectricCar extends Car {
+    ElectricCar(String regNo) {
+        super(regNo);
+        System.out.println("ElectricCar constructor called");
+    }
+}
+
+public class Task06_VehicleInheritance {
+    public static void main(String[] args) {
+
+        System.out.println("=== TWO WHEELER ===");
+        Vehicle bike = new TwoWheeler("TN01A1");
+        System.out.println("Parking Fee: Rs "
+                + bike.calculateFee(2));
+
+        System.out.println("\n=== CAR ===");
+        Vehicle car = new Car("TN02B2");
+        System.out.println("Parking Fee: Rs "
+                + car.calculateFee(2));
+
+        System.out.println("\n=== ELECTRIC CAR ===");
+        Vehicle electric = new ElectricCar("TN03C3");
+        System.out.println("Parking Fee: Rs "
+                + electric.calculateFee(2));
+    }
+}

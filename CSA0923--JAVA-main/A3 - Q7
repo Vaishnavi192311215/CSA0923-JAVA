@@ -1,0 +1,128 @@
+
+import java.nio.file.*;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+public class Main {
+
+    static class Result {
+        final int id, score;
+
+        Result(int i, int s) {
+            id = i;
+            score = s;
+        }
+    }
+
+    static class Outcome {
+        final int ok, failed;
+        final long sum;
+
+        Outcome(int o, int f, long s) {
+            ok = o;
+            failed = f;
+            sum = s;
+        }
+    }
+
+    static Outcome process(Path dir, int count, int pool)
+            throws Exception {
+
+        ConcurrentLinkedQueue<Result> successes =
+            new ConcurrentLinkedQueue<>();
+
+        ConcurrentLinkedQueue<String> failures =
+            new ConcurrentLinkedQueue<>();
+
+        ExecutorService executor =
+            Executors.newFixedThreadPool(pool);
+
+        List<Future<Result>> futures = new ArrayList<>();
+
+        for (int i = 0; i < count; i++) {
+
+            final int id = i;
+            final Path file = dir.resolve("score" + i + ".txt");
+
+            futures.add(executor.submit(() -> {
+
+                if (id % 97 == 0)
+                    throw new FileNotFoundException(
+                        "Missing score file: " + file.getFileName());
+
+                String raw = Files.readString(file).trim();
+
+                if (raw.equals("CORRUPT") || raw.isEmpty())
+                    throw new IllegalArgumentException(
+                        "Corrupt score file: " + file.getFileName());
+
+                int score = Integer.parseInt(raw);
+
+                if (score < 0 || score > 100)
+                    throw new IllegalArgumentException(
+                        "Invalid score: " + file.getFileName());
+
+                return new Result(id, score);
+            }));
+        }
+
+        executor.shutdown();
+
+        for (int i = 0; i < futures.size(); i++) {
+            try {
+                Result r = futures.get(i).get();
+                successes.add(r);
+            } catch (ExecutionException e) {
+                failures.add(e.getCause().getMessage());
+            }
+        }
+
+        if (!executor.awaitTermination(1, TimeUnit.MINUTES))
+            executor.shutdownNow();
+
+        long sum = 0;
+
+        for (Result r : successes)
+            sum += r.score;
+
+        return new Outcome(
+            successes.size(), failures.size(), sum);
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        Path dir = Files.createTempDirectory("exam-scores");
+        int n = 10000;
+
+        for (int i = 0; i < n; i++) {
+            Path p = dir.resolve("score" + i + ".txt");
+
+            if (i % 97 == 0)
+                continue;
+
+            Files.writeString(
+                p, (i % 113 == 0)
+                    ? "CORRUPT"
+                    : String.valueOf(i % 101));
+        }
+
+        for (int pool : new int[]{1, 2, 4, 8}) {
+
+            long start = System.nanoTime();
+
+            Outcome o = process(dir, n, pool);
+
+            long ms = (System.nanoTime() - start) / 1_000_000;
+
+            System.out.println(
+                "Pool " + pool
+                + ": success=" + o.ok
+                + ", failed=" + o.failed
+                + ", scoreSum=" + o.sum
+                + ", time=" + ms + " ms");
+        }
+
+        System.out.println("Expected total tasks: " + n);
+    }
+}

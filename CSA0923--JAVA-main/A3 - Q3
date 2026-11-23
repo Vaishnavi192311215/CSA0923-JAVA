@@ -1,0 +1,120 @@
+
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+
+public class Main {
+
+    static class TrackedReader implements AutoCloseable {
+        static int openCount = 0;
+        final BufferedReader reader;
+
+        TrackedReader(Path p) throws IOException {
+            reader = Files.newBufferedReader(p);
+            openCount++;
+        }
+
+        String readLine() throws IOException {
+            return reader.readLine();
+        }
+
+        public void close() throws IOException {
+            try {
+                reader.close();
+            } finally {
+                openCount--;
+            }
+        }
+    }
+
+    static void manual(List<Path> files, Path output, int failAt)
+            throws IOException {
+
+        List<TrackedReader> opened = new ArrayList<>();
+        BufferedWriter writer = null;
+
+        try {
+            writer = Files.newBufferedWriter(output);
+
+            for (int i = 0; i < files.size(); i++) {
+                TrackedReader r = new TrackedReader(files.get(i));
+                opened.add(r);
+
+                if (i == failAt)
+                    throw new IOException("Injected failure while reading "
+                        + files.get(i).getFileName());
+
+                String line;
+                while ((line = r.readLine()) != null)
+                    writer.write(line + "\n");
+
+                r.close();
+                opened.remove(r);
+            }
+        } finally {
+            if (writer != null)
+                writer.close();
+        }
+    }
+
+    static void safe(List<Path> files, Path output, int failAt)
+            throws IOException {
+
+        try (BufferedWriter writer = Files.newBufferedWriter(output)) {
+            for (int i = 0; i < files.size(); i++) {
+                final int index = i;
+
+                try (TrackedReader r =
+                         new TrackedReader(files.get(i))) {
+
+                    if (index == failAt)
+                        throw new IOException(
+                            "Injected failure while reading "
+                            + files.get(i).getFileName());
+
+                    String line;
+                    while ((line = r.readLine()) != null)
+                        writer.write(line + "\n");
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        Path dir = Files.createTempDirectory("sales");
+        List<Path> inputs = new ArrayList<>();
+
+        for (int i = 0; i < 3; i++) {
+            Path p = dir.resolve("store" + i + ".txt");
+            Files.writeString(p, "Store " + i + " sales=100\n");
+            inputs.add(p);
+        }
+
+        try {
+            manual(inputs, dir.resolve("manual.txt"), 1);
+        } catch (IOException e) {
+            System.out.println("Manual failure: " + e.getMessage());
+        }
+
+        System.out.println(
+            "Tracked readers left open after manual failure: "
+            + TrackedReader.openCount);
+
+        TrackedReader.openCount = 0;
+
+        try {
+            safe(inputs, dir.resolve("safe.txt"), 1);
+        } catch (IOException e) {
+            System.out.println(
+                "Try-with-resources failure logged: " + e.getMessage());
+        }
+
+        System.out.println(
+            "Tracked readers left open after try-with-resources: "
+            + TrackedReader.openCount);
+
+        System.out.println(
+            "Successful report sample: Store 0 sales=100");
+    }
+}

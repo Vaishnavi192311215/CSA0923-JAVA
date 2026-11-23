@@ -1,0 +1,79 @@
+
+import java.util.*;
+
+public class Main {
+
+    static class Station extends Thread {
+        final int id, scripts;
+
+        Station(int id, int scripts) {
+            super("Station-" + id);
+            this.id = id;
+            this.scripts = scripts;
+        }
+
+        public void run() {
+            try {
+                Thread.sleep((long)(id * 7));
+                System.out.println(
+                    getName() + " scanned " + scripts + " scripts");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    static class RunnableStation implements Runnable {
+        final int id, scripts;
+
+        RunnableStation(int i, int s) {
+            id = i;
+            scripts = s;
+        }
+
+        public void run() {
+            try {
+                Thread.sleep((long)(id * 5));
+                System.out.println(
+                    "Runnable station " + id + " scanned " + scripts);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        List<Thread> stations = new ArrayList<>();
+
+        for (int i = 1; i <= 4; i++) {
+            Thread t = new Station(i, 25);
+            stations.add(t);
+            t.start();
+        }
+
+        for (Thread t : stations)
+            t.join();
+
+        System.out.println(
+            "All Thread stations completed; alive="
+            + stations.stream().anyMatch(Thread::isAlive));
+
+        Thread r = new Thread(new RunnableStation(5, 20));
+        r.start();
+        r.join();
+
+        Thread daemon = new Thread(() -> {
+            try {
+                while (true)
+                    Thread.sleep(100);
+            } catch (InterruptedException ignored) {
+            }
+        });
+
+        daemon.setDaemon(true);
+        daemon.start();
+
+        System.out.println("Daemon flag=" + daemon.isDaemon());
+    }
+}

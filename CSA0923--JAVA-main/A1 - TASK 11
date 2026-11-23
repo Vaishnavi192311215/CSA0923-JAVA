@@ -1,0 +1,148 @@
+
+import java.util.*;
+
+abstract class Vehicle {
+    String regNo;
+
+    Vehicle(String regNo) {
+        this.regNo = regNo;
+    }
+
+    abstract int rate();
+}
+
+class Bike extends Vehicle {
+    Bike(String regNo) {
+        super(regNo);
+    }
+
+    int rate() {
+        return 10;
+    }
+}
+
+class Car extends Vehicle {
+    Car(String regNo) {
+        super(regNo);
+    }
+
+    int rate() {
+        return 30;
+    }
+}
+
+interface Chargeable {
+    int chargingFee(int kWh);
+}
+
+class ElectricCar extends Car implements Chargeable {
+    ElectricCar(String regNo) {
+        super(regNo);
+    }
+
+    public int chargingFee(int kWh) {
+        return kWh * 12;
+    }
+}
+
+class Parking {
+    String[] slots = new String[3];
+    Map<String, Vehicle> vehicles = new HashMap<>();
+    int ticketNo = 1000;
+    double total = 0;
+
+    void enter(Vehicle v) {
+        if (v == null || v.regNo == null ||
+            v.regNo.trim().isEmpty()) {
+            System.out.println("Invalid vehicle");
+            return;
+        }
+
+        if (vehicles.containsKey(v.regNo)) {
+            System.out.println("Duplicate vehicle");
+            return;
+        }
+
+        for (int i = 0; i < slots.length; i++) {
+            if (slots[i] == null) {
+                slots[i] = v.regNo;
+                vehicles.put(v.regNo, v);
+                System.out.println("Ticket " + (++ticketNo)
+                    + " | Slot " + i);
+                return;
+            }
+        }
+
+        System.out.println("Parking Full");
+    }
+
+    void exit(String regNo, int minutes,
+              int kWh, boolean monthlyPass) {
+
+        Vehicle v = vehicles.get(regNo);
+
+        if (v == null || minutes < 0 || kWh < 0) {
+            System.out.println("Invalid exit");
+            return;
+        }
+
+        if (!(v instanceof Chargeable) && kWh > 0) {
+            System.out.println("Charging not supported");
+            return;
+        }
+
+        int hours = minutes / 60;
+        if (minutes % 60 != 0) hours++;
+
+        double fee = monthlyPass ? 0 : hours * v.rate();
+
+        if (v instanceof Chargeable) {
+            fee += ((Chargeable) v).chargingFee(kWh);
+        }
+
+        total += fee;
+        vehicles.remove(regNo);
+
+        for (int i = 0; i < slots.length; i++) {
+            if (regNo.equals(slots[i])) {
+                slots[i] = null;
+                break;
+            }
+        }
+
+        System.out.println(regNo + " Fee: Rs " + fee);
+    }
+}
+
+public class Task11_SmartParkingSystem {
+    public static void main(String[] args) {
+
+        Parking p = new Parking();
+
+        System.out.println("=== VEHICLE ENTRY ===");
+
+        p.enter(new Bike("TN01"));
+        p.enter(new Car("TN02"));
+        p.enter(new ElectricCar("TN03"));
+
+        System.out.println("\n=== VALIDATION TESTS ===");
+
+        p.enter(new Car("TN04"));  // Parking full
+        p.enter(new Car("TN02"));  // Duplicate
+        p.enter(null);             // Invalid vehicle
+        p.exit("UNKNOWN", 60, 0, false);
+
+        System.out.println("\n=== VEHICLE EXIT ===");
+
+        p.exit("TN01", 0, 0, false);
+        p.exit("TN02", 130, 0, false);
+        p.exit("TN03", 180, 10, false);
+
+        System.out.println("\n=== MONTHLY PASS TEST ===");
+
+        p.enter(new Car("TN05"));
+        p.exit("TN05", 120, 0, true);
+
+        System.out.println("\nTotal Collection: Rs " + p.total);
+    }
+}

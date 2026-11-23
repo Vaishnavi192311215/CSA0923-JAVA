@@ -1,0 +1,23 @@
+import java.util.*;
+public class Q7Redesign {
+ static volatile int sink;
+ static long arrayList(int n){
+     long s=System.nanoTime();
+     List<Integer>x=new ArrayList<>();
+     for(int i=0;i<n;i++)x.add(i);
+     for(int i=0;i<n;i++)x.add(0,-i);
+     sink=x.size();
+     return System.nanoTime()-s;}
+ static long deque(int n){
+     long s=System.nanoTime();
+     Deque<Integer>x=new ArrayDeque<>();
+     for(int i=0;i<n;i++)x.addLast(i);
+     for(int i=0;i<n;i++)x.addFirst(-i);
+     sink=x.size();
+     return System.nanoTime()-s;}
+ public static void main(String[]args){
+     System.out.println("Same workload: build n items at rear, then insert n items at front");
+     for(int n:new int[]{1000,5000,10000,20000}){
+         long a=arrayList(n),d=deque(n);
+         System.out.printf(Locale.US,"n=%d ArrayList=%.3f ms ArrayDeque=%.3f ms speedup=%.2fx%n",n,a/1e6,d/1e6,(double)a/Math.max(1,d));}}
+}

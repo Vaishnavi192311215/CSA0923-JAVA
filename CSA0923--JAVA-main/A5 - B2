@@ -1,0 +1,64 @@
+
+public class Main {
+    // Simulated database users
+    static String[][] users = {
+        {"admin", "admin123"},
+        {"chakritha", "pass123"},
+        {"student", "java123"}
+    };
+
+    // Unsafe login: SQL injection demonstration
+    static boolean unsafe(String id, String pwd) {
+
+        String sql = "SELECT 1 FROM users WHERE user_id='"
+                + id + "' AND password_text='" + pwd + "'";
+
+        System.out.println("\nUnsafe SQL: " + sql);
+
+        // Simulate the effect of SQL injection
+        if (pwd.contains("' OR '1'='1'")) {
+            return true;
+        }
+
+        for (String[] user : users) {
+            if (user[0].equals(id) && user[1].equals(pwd)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Safe login: parameterized query demonstration
+    static boolean safe(String id, String pwd) {
+
+        String sql = "SELECT 1 FROM users WHERE user_id=? "
+                + "AND password_text=?";
+
+        System.out.println("\nSafe SQL: " + sql);
+        System.out.println("Parameter 1: " + id);
+        System.out.println("Parameter 2: " + pwd);
+
+        // Treat input strictly as data
+        for (String[] user : users) {
+            if (user[0].equals(id) && user[1].equals(pwd)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void main(String[] args) {
+
+        String attack = "' OR '1'='1' -- ";
+
+        System.out.println("SQL INJECTION DEMONSTRATION");
+
+        System.out.println("\nUnsafe Login: "
+                + unsafe("unknown", attack));
+
+        System.out.println("\nSafe Login: "
+                + safe("unknown", attack));
+    }
+}

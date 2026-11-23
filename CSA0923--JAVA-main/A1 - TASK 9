@@ -1,0 +1,87 @@
+
+abstract class Vehicle {
+    String regNo;
+
+    Vehicle(String regNo) {
+        this.regNo = regNo;
+    }
+
+    abstract void displayType();
+}
+
+interface Payable {
+    double calculateFee(int hours);
+
+    default void paymentStatus() {
+        System.out.println("Payment Required");
+    }
+}
+
+interface Chargeable {
+    double chargingFee(int kWh);
+
+    default void chargingStatus() {
+        System.out.println("EV Charging Available");
+    }
+
+    static void displayRate() {
+        System.out.println("Charging Rate: Rs 12/kWh");
+    }
+}
+
+class Car extends Vehicle implements Payable {
+    Car(String regNo) {
+        super(regNo);
+    }
+
+    @Override
+    void displayType() {
+        System.out.println("Vehicle: Car");
+    }
+
+    @Override
+    public double calculateFee(int hours) {
+        return hours * 30;
+    }
+}
+
+class ElectricCar extends Car implements Chargeable {
+    ElectricCar(String regNo) {
+        super(regNo);
+    }
+
+    @Override
+    void displayType() {
+        System.out.println("Vehicle: Electric Car");
+    }
+
+    @Override
+    public double chargingFee(int kWh) {
+        return kWh * 12;
+    }
+}
+
+public class Task09_Abstraction {
+    public static void main(String[] args) {
+
+        Car car = new Car("TN01A1");
+        ElectricCar ev = new ElectricCar("TN02B2");
+
+        System.out.println("=== ABSTRACTION ===");
+        car.displayType();
+        System.out.println("Parking Fee: Rs "
+                + car.calculateFee(2));
+
+        System.out.println("\n=== MULTIPLE INTERFACES ===");
+        ev.displayType();
+        System.out.println("Parking Fee: Rs "
+                + ev.calculateFee(2));
+        System.out.println("Charging Fee: Rs "
+                + ev.chargingFee(10));
+
+        ev.paymentStatus();
+        ev.chargingStatus();
+
+        Chargeable.displayRate();
+    }
+}

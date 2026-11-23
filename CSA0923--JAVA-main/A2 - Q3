@@ -1,0 +1,100 @@
+import java.util.*;
+
+public class Q3HashContract {
+
+    static class BrokenStudent {
+        String regNo;
+        String name;
+
+        BrokenStudent(String regNo, String name) {
+            this.regNo = regNo;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            return object instanceof BrokenStudent student
+                    && regNo.equals(student.regNo);
+        }
+    }
+
+    static class FixedStudent {
+        final String regNo;
+        final String name;
+
+        FixedStudent(String regNo, String name) {
+            this.regNo = regNo;
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            return this == object
+                    || object instanceof FixedStudent student
+                    && regNo.equals(student.regNo);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(regNo);
+        }
+
+        @Override
+        public String toString() {
+            return regNo + " " + name;
+        }
+    }
+
+    static class MutableStudent {
+        String regNo;
+
+        MutableStudent(String regNo) {
+            this.regNo = regNo;
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            return object instanceof MutableStudent student
+                    && regNo.equals(student.regNo);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(regNo);
+        }
+    }
+
+    public static void main(String[] args) {
+
+        Set<BrokenStudent> apparentlyWorks = new HashSet<>();
+        apparentlyWorks.add(new BrokenStudent("A1", "A"));
+        apparentlyWorks.add(new BrokenStudent("B2", "B"));
+
+        System.out.println("Test 1 distinct IDs, observed size="
+                + apparentlyWorks.size());
+
+        Set<BrokenStudent> duplicates = new HashSet<>();
+        duplicates.add(new BrokenStudent("A1", "Arun"));
+        duplicates.add(new BrokenStudent("A1", "Arun again"));
+
+        System.out.println("Test 2 same ID with missing hashCode, observed size="
+                + duplicates.size());
+
+        Set<MutableStudent> changed = new HashSet<>();
+        MutableStudent mutableStudent = new MutableStudent("C3");
+        changed.add(mutableStudent);
+        mutableStudent.regNo = "D4";
+
+        System.out.println("Test 3 contains after changing key field="
+                + changed.contains(mutableStudent)
+                + ", set size=" + changed.size());
+
+        Set<FixedStudent> fixed = new HashSet<>();
+        fixed.add(new FixedStudent("A1", "Arun"));
+        fixed.add(new FixedStudent("A1", "Arun again"));
+        fixed.add(new FixedStudent("B2", "Divya"));
+
+        System.out.println("After fix, unique students=" + fixed.size()
+                + "; entries=" + fixed);
+    }
+}

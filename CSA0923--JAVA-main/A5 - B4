@@ -1,0 +1,110 @@
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.util.*;
+
+public class Main {
+
+    public static void main(String[] args) throws Exception {
+
+        Path file = Paths.get("passes.csv");
+
+        // Create sample CSV data automatically
+        List<String> sample = Arrays.asList(
+            "P101,REG101,Chakritha,12,4500",
+            "P102,REG102,Bhavya,15,5000",
+            "P103,REG103,Vineetha,10,4000",
+            "P104,REG104,Student4,12,INVALID",
+            "P105,REG105,Student5,14,3500",
+            "P106,REG106,Student6,13,-500",
+            "P107,REG107,Student7,11,4200",
+            "P108,REG108,Student8,abc,4500",
+            "P109,REG109,Student9,12,4800",
+            "P110,REG110,Student10,15,5500",
+            "P111,REG111,Student11,13,3000",
+            "P112,REG112,Student12,12,INVALID"
+        );
+
+        Files.write(file, sample, StandardCharsets.UTF_8);
+
+        List<String> bad = new ArrayList<>();
+        List<String[]> database = new ArrayList<>();
+
+        int lineNo = 0;
+        int loaded = 0;
+
+        System.out.println("===== BUS PASS CSV MIGRATION =====");
+
+        try (BufferedReader br = Files.newBufferedReader(
+                file, StandardCharsets.UTF_8)) {
+
+            String line;
+
+            while ((line = br.readLine()) != null) {
+
+                lineNo++;
+
+                String[] f = line.split(",", -1);
+
+                try {
+
+                    if (f.length != 5 ||
+                        f[0].trim().isEmpty() ||
+                        f[1].trim().isEmpty() ||
+                        f[2].trim().isEmpty()) {
+
+                        throw new IllegalArgumentException(
+                            "Expected five fields");
+                    }
+
+                    int route = Integer.parseInt(f[3]);
+                    double amount = Double.parseDouble(f[4]);
+
+                    if (amount < 0) {
+                        throw new IllegalArgumentException(
+                            "Negative amount");
+                    }
+
+                    database.add(f);
+                    loaded++;
+
+                    if (loaded % 1000 == 0) {
+                        System.out.println(
+                            "Batch executed: " + loaded);
+                    }
+
+                } catch (RuntimeException ex) {
+
+                    bad.add("Line " + lineNo + ": "
+                            + ex.getMessage());
+                }
+            }
+        }
+
+        System.out.println("\n===== MIGRATION RESULTS =====");
+
+        System.out.println("Valid rows: " + loaded);
+        System.out.println("Rejected rows: " + bad.size());
+
+        System.out.println("\nRejected Records:");
+
+        for (String error : bad) {
+            System.out.println(error);
+        }
+
+        System.out.println("\nSuccessfully migrated records:");
+
+        for (String[] record : database) {
+            System.out.println(
+                record[0] + " | " +
+                record[1] + " | " +
+                record[2] + " | " +
+                record[3] + " | " +
+                record[4]
+            );
+        }
+
+        System.out.println("\nMigration completed.");
+    }
+}

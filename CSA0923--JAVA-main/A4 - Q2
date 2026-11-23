@@ -1,0 +1,75 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+
+public class HospitalAppointmentDesk extends JFrame {
+    private final JTextField patientId = new JTextField(18);
+    private final JComboBox<String> department = new JComboBox<>(new String[]{"Cardiology", "Neurology", "Orthopaedics"});
+    private final JComboBox<String> doctor = new JComboBox<>();
+    private final JComboBox<String> slot = new JComboBox<>(new String[]{"09:00 AM", "10:00 AM", "11:00 AM"});
+
+    private final Map<String, String[]> doctors = new LinkedHashMap<>();
+
+    public HospitalAppointmentDesk() {
+        doctors.put("Cardiology", new String[]{"Dr. Rao", "Dr. Mehta"});
+        doctors.put("Neurology", new String[]{"Dr. Iyer", "Dr. Khan"});
+        doctors.put("Orthopaedics", new String[]{"Dr. Das", "Dr. Roy"});
+
+        setTitle("Hospital Appointment Desk");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(480, 350);
+        setLocationRelativeTo(null);
+
+        JPanel form = new JPanel(new GridLayout(4, 2, 12, 15));
+        form.setBorder(BorderFactory.createEmptyBorder(25, 30, 20, 30));
+        form.add(new JLabel("Patient ID:")); form.add(patientId);
+        form.add(new JLabel("Department:")); form.add(department);
+        form.add(new JLabel("Doctor:")); form.add(doctor);
+        form.add(new JLabel("Time Slot:")); form.add(slot);
+
+        department.addActionListener(e -> updateDoctors());
+        updateDoctors();
+
+        JButton book = new JButton("Book Appointment");
+        JButton clear = new JButton("Clear");
+        JPanel buttons = new JPanel();
+        buttons.add(book); buttons.add(clear);
+        book.addActionListener(e -> bookAppointment());
+        clear.addActionListener(e -> {
+            patientId.setText("");
+            department.setSelectedIndex(0);
+            slot.setSelectedIndex(0);
+            updateDoctors();
+        });
+
+        add(new JLabel("HOSPITAL APPOINTMENT DESK", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(form, BorderLayout.CENTER);
+        add(buttons, BorderLayout.SOUTH);
+    }
+
+    private void updateDoctors() {
+        String selected = (String) department.getSelectedItem();
+        doctor.removeAllItems();
+        if (selected != null) {
+            for (String name : doctors.get(selected)) doctor.addItem(name);
+        }
+    }
+
+    private void bookAppointment() {
+        String id = patientId.getText().trim();
+        if (id.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Patient ID is required.", "Validation", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this,
+            "Appointment Confirmed!\nPatient ID: " + id +
+            "\nDepartment: " + department.getSelectedItem() +
+            "\nDoctor: " + doctor.getSelectedItem() +
+            "\nTime: " + slot.getSelectedItem(),
+            "Booking Confirmation", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new HospitalAppointmentDesk().setVisible(true));
+    }
+}

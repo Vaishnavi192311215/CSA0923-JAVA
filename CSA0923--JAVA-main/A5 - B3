@@ -1,0 +1,106 @@
+
+import java.util.*;
+
+public class Main {
+
+    static int loadAll(List<String[]> rows,
+                       List<String[]> database) {
+
+        List<String[]> pending = new ArrayList<>();
+        int n = 0;
+
+        try {
+            for (String[] r : rows) {
+
+                if (r.length != 5) {
+                    throw new IllegalArgumentException(
+                        "Five fields required");
+                }
+
+                int route = Integer.parseInt(r[3]);
+                double amount = Double.parseDouble(r[4]);
+
+                if (amount < 0) {
+                    throw new IllegalArgumentException(
+                        "Negative amount");
+                }
+
+                pending.add(r);
+                n++;
+
+                if (n % 1000 == 0) {
+                    System.out.println(
+                        "Batch executed: " + n + " records");
+                }
+            }
+
+            // Commit: add all pending records
+            database.addAll(pending);
+
+            System.out.println("Transaction committed.");
+            return n;
+
+        } catch (RuntimeException e) {
+
+            // Rollback: discard all pending records
+            pending.clear();
+
+            System.out.println("Transaction rolled back!");
+            System.out.println("Reason: " + e.getMessage());
+
+            return 0;
+        }
+    }
+
+    public static void main(String[] args) {
+
+        List<String[]> database = new ArrayList<>();
+        List<String[]> rows = new ArrayList<>();
+
+        // Generate 10,000 valid records
+        for (int i = 1; i <= 10000; i++) {
+            rows.add(new String[]{
+                "P" + i,
+                "REG" + i,
+                "Student" + i,
+                "12",
+                "4500.00"
+            });
+        }
+
+        System.out.println("===== SUCCESSFUL BATCH LOADING =====");
+
+        int loaded = loadAll(rows, database);
+
+        System.out.println("Loaded: " + loaded);
+        System.out.println("Database records: "
+                + database.size());
+
+        // Generate records with an invalid amount
+        List<String[]> testRows = new ArrayList<>();
+
+        for (int i = 1; i <= 10000; i++) {
+            String amount = (i == 5001)
+                    ? "INVALID"
+                    : "4500.00";
+
+            testRows.add(new String[]{
+                "T" + i,
+                "TEST" + i,
+                "Student" + i,
+                "12",
+                amount
+            });
+        }
+
+        System.out.println("\n===== ROLLBACK TEST =====");
+
+        int rollbackResult = loadAll(testRows, database);
+
+        System.out.println("Loaded in rollback test: "
+                + rollbackResult);
+
+        System.out.println("Final database records: "
+                + database.size());
+    }
+}

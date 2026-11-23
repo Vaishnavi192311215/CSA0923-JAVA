@@ -1,0 +1,136 @@
+
+import java.util.concurrent.*;
+
+public class Main {
+
+    static class Booking {
+        final boolean[] booked;
+        int bookingsMade = 0;
+
+        Booking(int seats) {
+            booked = new boolean[seats];
+        }
+
+        void bookUnsafe(int seat, CountDownLatch checked,
+                        CountDownLatch release) {
+
+            if (!booked[seat]) {
+                checked.countDown();
+
+                try {
+                    release.await();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+
+                booked[seat] = true;
+                bookingsMade++;
+            }
+        }
+
+        synchronized void bookSync(int seat) {
+            if (!booked[seat]) {
+                booked[seat] = true;
+                bookingsMade++;
+            }
+        }
+
+        void bookBlock(int seat) {
+            synchronized (this) {
+                if (!booked[seat]) {
+                    booked[seat] = true;
+                    bookingsMade++;
+                }
+            }
+        }
+    }
+
+    static long run(int mode, int attempts) throws Exception {
+
+        Booking b = new Booking(1000);
+        long start = System.nanoTime();
+
+        Thread[] ts = new Thread[attempts];
+
+        for (int i = 0; i < attempts; i++) {
+            final int seat = i % 1000;
+
+            ts[i] = new Thread(() -> {
+                if (mode == 0)
+                    b.bookSync(seat);
+                else if (mode == 1)
+                    b.bookBlock(seat);
+                else
+                    b.bookSync(seat);
+            });
+
+            ts[i].start();
+        }
+
+        for (Thread t : ts)
+            t.join();
+
+        return System.nanoTime() - start;
+    }
+
+    public static void main(String[] args) throws Exception {
+
+        int doubleBooked = 0;
+
+        for (int round = 0; round < 10; round++) {
+
+            Booking b = new Booking(1);
+
+            CountDownLatch checked = new CountDownLatch(2);
+            CountDownLatch release = new CountDownLatch(1);
+
+            Thread a = new Thread(
+                () -> b.bookUnsafe(0, checked, release));
+
+            Thread c = new Thread(
+                () -> b.bookUnsafe(0, checked, release));
+
+            a.start();
+            c.start();
+
+            checked.await();
+            release.countDown();
+
+            a.join();
+            c.join();
+
+            if (b.bookingsMade > 1)
+                doubleBooked++;
+        }
+
+        System.out.println(
+            "Unsafe rounds with duplicate sale: "
+            + doubleBooked + "/10");
+
+        Booking fixed = new Booking(10);
+        Thread[] users = new Thread[100];
+
+        for (int i = 0; i < 100; i++) {
+            final int seat = i % 10;
+
+            users[i] = new Thread(
+                () -> fixed.bookSync(seat));
+
+            users[i].start();
+        }
+
+        for (Thread t : users)
+            t.join();
+
+        System.out.println("Seats sold: " + fixed.bookingsMade);
+
+        System.out.println(
+            "Synchronized method 10,000 attempts ms: "
+            + (run(0, 10000) / 1_000_000.0));
+
+        System.out.println(
+            "Synchronized block 10,000 attempts ms: "
+            + (run(1, 10000) / 1_000_000.0));
+    }
+}

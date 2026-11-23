@@ -1,0 +1,74 @@
+import java.util.*;
+
+public class Q5Leaderboard {
+
+    static class Team {
+        final String name;
+        final int points;
+        final int goalDifference;
+
+        Team(String name, int points, int goalDifference) {
+            this.name = name;
+            this.points = points;
+            this.goalDifference = goalDifference;
+        }
+
+        @Override
+        public String toString() {
+            return name + "(" + points + "," + goalDifference + ")";
+        }
+    }
+
+    static class Leaderboard<T> {
+        private final List<T> items = new ArrayList<>();
+        private final Comparator<? super T> order;
+
+        Leaderboard(Comparator<? super T> order) {
+            this.order = order;
+        }
+
+        void add(T item) {
+            items.add(item);
+        }
+
+        List<T> ranking() {
+            List<T> copy = new ArrayList<>(items);
+            copy.sort(order);
+            return copy;
+        }
+    }
+
+    public static void main(String[] args) {
+
+        Comparator<Team> byRank = Comparator
+                .comparingInt((Team team) -> team.points).reversed()
+                .thenComparing(Comparator
+                        .comparingInt((Team team) -> team.goalDifference).reversed())
+                .thenComparing(team -> team.name);
+
+        Leaderboard<Team> leaderboard = new Leaderboard<>(byRank);
+
+        leaderboard.add(new Team("Panthers", 9, 4));
+        leaderboard.add(new Team("Eagles", 9, 6));
+        leaderboard.add(new Team("Cobras", 6, 1));
+        leaderboard.add(new Team("Bisons", 9, 4));
+
+        System.out.println("Ranking=" + leaderboard.ranking());
+
+        List<Team> ties = List.of(
+                new Team("Zeta", 10, 5),
+                new Team("Alpha", 10, 5),
+                new Team("Beta", 10, 7),
+                new Team("Delta", 8, 9)
+        );
+
+        System.out.println("Tie test="
+                + ties.stream().sorted(byRank).toList());
+
+        Comparator<Team> faultyComparator = (first, second) ->
+                second.points - first.points;
+
+        System.out.println("Faulty comparator ignores goal difference and name; tied teams compare as="
+                + faultyComparator.compare(new Team("A", 9, 1), new Team("B", 9, 8)));
+    }
+}

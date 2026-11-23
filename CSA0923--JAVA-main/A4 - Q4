@@ -1,0 +1,62 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class DrawPad extends JFrame {
+    private final DrawingPanel drawingPanel = new DrawingPanel();
+    private final JLabel countLabel = new JLabel("Clicks: 0");
+
+    public DrawPad() {
+        setTitle("Draw Pad");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(650, 480);
+        setLocationRelativeTo(null);
+
+        JButton clear = new JButton("Clear Drawing");
+        clear.addActionListener(e -> {
+            drawingPanel.clearPoints();
+            countLabel.setText("Clicks: 0");
+        });
+
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        bottom.add(countLabel);
+        bottom.add(clear);
+
+        add(new JLabel("Click inside the white area to draw points", SwingConstants.CENTER), BorderLayout.NORTH);
+        add(drawingPanel, BorderLayout.CENTER);
+        add(bottom, BorderLayout.SOUTH);
+    }
+
+    private class DrawingPanel extends JPanel {
+        private final List<Point> points = new ArrayList<>();
+
+        DrawingPanel() {
+            setBackground(Color.WHITE);
+            setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            addMouseListener(new MouseAdapter() {
+                @Override public void mouseClicked(MouseEvent e) {
+                    points.add(e.getPoint());
+                    countLabel.setText("Clicks: " + points.size());
+                    repaint();
+                }
+            });
+        }
+
+        void clearPoints() {
+            points.clear();
+            repaint();
+        }
+
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            g.setColor(Color.BLUE);
+            for (Point p : points) g.fillOval(p.x - 4, p.y - 4, 8, 8);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new DrawPad().setVisible(true));
+    }
+}

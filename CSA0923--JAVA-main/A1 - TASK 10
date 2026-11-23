@@ -1,0 +1,91 @@
+
+class ParkingSlot {
+    private int slotNumber;
+    private boolean occupied;
+
+    public ParkingSlot(int slotNumber) {
+        setSlotNumber(slotNumber);
+    }
+
+    public int getSlotNumber() {
+        return slotNumber;
+    }
+
+    public void setSlotNumber(int number) {
+        if (number <= 0)
+            throw new IllegalArgumentException("Invalid slot");
+        slotNumber = number;
+    }
+
+    public boolean isOccupied() {
+        return occupied;
+    }
+
+    public void parkVehicle() {
+        occupied = true;
+    }
+
+    public void releaseSlot() {
+        occupied = false;
+    }
+}
+
+class ParkingTicket {
+    private int duration;
+
+    public void setDuration(int minutes) {
+        if (minutes < 0)
+            throw new IllegalArgumentException(
+                "Duration cannot be negative");
+        duration = minutes;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+}
+
+public class Task10_Encapsulation {
+    public static void main(String[] args) {
+
+        System.out.println("=== ENCAPSULATION ===");
+
+        ParkingSlot slot = new ParkingSlot(101);
+        slot.parkVehicle();
+
+        System.out.println("Slot: " + slot.getSlotNumber());
+        System.out.println("Occupied: " + slot.isOccupied());
+
+        slot.releaseSlot();
+        System.out.println("After Release: "
+                + slot.isOccupied());
+
+        System.out.println("\n=== VALIDATION ===");
+
+        ParkingTicket ticket = new ParkingTicket();
+        ticket.setDuration(120);
+
+        System.out.println("Duration: "
+                + ticket.getDuration());
+
+        try {
+            ticket.setDuration(-10);
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+
+        System.out.println("\n=== WRAPPER CLASS ===");
+
+        Integer a = Integer.valueOf(200);
+        Integer b = Integer.valueOf(200);
+
+        System.out.println("Using == : " + (a == b));
+        System.out.println("Using equals(): " + a.equals(b));
+
+        Integer count = 5; // Autoboxing
+        int total = count;  // Unboxing
+
+        System.out.println("Autoboxing: " + count);
+        System.out.println("Unboxing: " + total);
+    }
+}

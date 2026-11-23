@@ -1,0 +1,79 @@
+import java.util.*;
+
+public class Q6Triage {
+
+    static class Patient {
+        final String name;
+        final int severity;
+        final long arrival;
+
+        Patient(String name, int severity, long arrival) {
+            this.name = name;
+            this.severity = severity;
+            this.arrival = arrival;
+        }
+
+        @Override
+        public String toString() {
+            return name + "(S" + severity + ")";
+        }
+    }
+
+    private long counter = 0;
+    private final PriorityQueue<Patient> queue = new PriorityQueue<>(
+            Comparator.comparingInt((Patient patient) -> patient.severity)
+                    .thenComparingLong(patient -> patient.arrival)
+    );
+
+    void admit(String name, int severity) {
+        queue.add(new Patient(name, severity, counter++));
+    }
+
+    Patient next() {
+        return queue.poll();
+    }
+
+    public static void main(String[] args) {
+        Q6Triage emergencyRoom = new Q6Triage();
+
+        emergencyRoom.admit("Ravi", 3);
+        emergencyRoom.admit("Meena", 1);
+        emergencyRoom.admit("John", 3);
+        emergencyRoom.admit("Asha", 5);
+        emergencyRoom.admit("Kumar", 1);
+        emergencyRoom.admit("Lata", 2);
+
+        StringBuilder treatmentOrder = new StringBuilder();
+        Patient patient;
+
+        while ((patient = emergencyRoom.next()) != null) {
+            treatmentOrder.append(patient).append(' ');
+        }
+
+        System.out.println("Treatment order="
+                + treatmentOrder.toString().trim());
+
+        for (int n : new int[]{1000, 10000, 50000}) {
+            PriorityQueue<Integer> priorityQueue = new PriorityQueue<>();
+
+            long start = System.nanoTime();
+            for (int i = 0; i < n; i++) {
+                priorityQueue.add((i * 37) % 100);
+            }
+            long addTime = System.nanoTime() - start;
+
+            start = System.nanoTime();
+            while (!priorityQueue.isEmpty()) {
+                priorityQueue.poll();
+            }
+            long removeAllTime = System.nanoTime() - start;
+
+            System.out.printf(Locale.US,
+                    "n=%d add=%.3f ms remove-all=%.3f ms%n",
+                    n, addTime / 1e6, removeAllTime / 1e6);
+        }
+
+        System.out.println("Fairness extension: periodically recompute effective priority from wait duration, "
+                + "or use aging buckets/scheduled promotion to prevent indefinite low-severity waiting.");
+    }
+}
